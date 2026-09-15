@@ -7,406 +7,24 @@ import plotly.graph_objects as go
 from datetime import datetime
 from sklearn.linear_model import LinearRegression
 
-# Page Configuration
+# Page Configuration - Zero Emojis
 st.set_page_config(
     page_title="SalesPulse | Enterprise Sales Analytics",
-    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# High-fidelity CSS replicating exact theme, typography, colors and card styles from reference image
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+# Load External CSS and inject (Ensures high contrast and modern UI)
+def inject_custom_styles():
+    css_path = os.path.join(os.path.dirname(__file__), "frontend", "styles.css")
+    if not os.path.exists(css_path):
+        css_path = os.path.join(os.path.dirname(__file__), "styles.css")
+    if os.path.exists(css_path):
+        with open(css_path, "r", encoding="utf-8") as f:
+            css_code = f.read()
+            st.markdown(f"<style>{css_code}</style>", unsafe_allow_html=True)
 
-    * {
-        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    }
-
-    /* Main background */
-    .stApp {
-        background-color: #F4F6FA;
-    }
-
-    /* Dark Navy Sidebar Styling */
-    section[data-testid="stSidebar"] {
-        background-color: #0B132B !important;
-        color: #E2E8F0 !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    section[data-testid="stSidebar"] p, 
-    section[data-testid="stSidebar"] span, 
-    section[data-testid="stSidebar"] label {
-        color: #94A3B8 !important;
-        font-weight: 500;
-        font-size: 13px;
-    }
-    section[data-testid="stSidebar"] h1, 
-    section[data-testid="stSidebar"] h2, 
-    section[data-testid="stSidebar"] h3 {
-        color: #FFFFFF !important;
-        font-weight: 700;
-    }
-    
-    /* Brand logo in sidebar */
-    .brand-container {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 8px 4px 20px 4px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        margin-bottom: 20px;
-    }
-    .brand-icon {
-        background: #0D9488;
-        color: #FFFFFF;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-        font-weight: 800;
-        font-size: 18px;
-        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.35);
-    }
-    .brand-text {
-        color: #FFFFFF !important;
-        font-size: 18px;
-        font-weight: 700;
-        letter-spacing: -0.3px;
-    }
-
-    /* Active Nav pill */
-    .nav-pill-active {
-        background: #0D9488;
-        color: #FFFFFF !important;
-        padding: 10px 14px;
-        border-radius: 8px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 14px;
-        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
-    }
-
-    /* Sidebar bottom upgrade box */
-    .sidebar-upgrade-card {
-        background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%);
-        border-radius: 14px;
-        padding: 18px;
-        color: #FFFFFF;
-        margin-top: 24px;
-        box-shadow: 0 8px 24px rgba(13, 148, 136, 0.25);
-    }
-    .sidebar-upgrade-card h4 {
-        color: #FFFFFF !important;
-        margin: 0 0 6px 0;
-        font-size: 15px;
-        font-weight: 700;
-    }
-    .sidebar-upgrade-card p {
-        color: rgba(255, 255, 255, 0.85) !important;
-        font-size: 12px !important;
-        margin: 0 0 12px 0;
-        line-height: 1.4;
-    }
-    .sidebar-upgrade-btn {
-        background: #FFFFFF;
-        color: #0F172A;
-        font-weight: 700;
-        font-size: 12px;
-        padding: 8px 14px;
-        border-radius: 8px;
-        display: inline-block;
-        text-align: center;
-        width: 100%;
-        border: none;
-    }
-
-    /* Top Greeting & Header Bar */
-    .top-header-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-        gap: 16px;
-    }
-    .greeting-title {
-        font-size: 26px;
-        font-weight: 800;
-        color: #0F172A;
-        margin: 0 0 4px 0;
-        letter-spacing: -0.5px;
-    }
-    .greeting-sub {
-        font-size: 14px;
-        color: #64748B;
-        margin: 0;
-        font-weight: 500;
-    }
-    .date-pill {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        padding: 8px 16px;
-        font-size: 13px;
-        font-weight: 600;
-        color: #1E293B;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-    }
-
-    /* KPI Cards exact replication */
-    .kpi-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 18px;
-        margin-bottom: 24px;
-    }
-    @media (max-width: 1024px) {
-        .kpi-row { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 640px) {
-        .kpi-row { grid-template-columns: 1fr; }
-    }
-
-    .kpi-card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 14px;
-        padding: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        transition: all 0.2s ease;
-    }
-    .kpi-card:hover {
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
-        transform: translateY(-2px);
-    }
-    .kpi-content {
-        display: flex;
-        flex-direction: column;
-    }
-    .kpi-label {
-        font-size: 13px;
-        font-weight: 600;
-        color: #64748B;
-        margin-bottom: 6px;
-    }
-    .kpi-value {
-        font-size: 28px;
-        font-weight: 800;
-        color: #0F172A;
-        letter-spacing: -0.5px;
-        line-height: 1.1;
-        margin-bottom: 8px;
-    }
-    .kpi-delta {
-        font-size: 12px;
-        font-weight: 600;
-        color: #10B981;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-    .kpi-icon-circle {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        flex-shrink: 0;
-    }
-    .icon-teal { background: #E6FFFA; color: #0D9488; }
-    .icon-navy { background: #EEF2FF; color: #3B82F6; }
-    .icon-coral { background: #FFF1F2; color: #F43F5E; }
-    .icon-cyan { background: #ECFEFF; color: #0891B2; }
-
-    /* Clean Card Container */
-    .analytics-card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 14px;
-        padding: 22px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
-        margin-bottom: 20px;
-    }
-    .card-header-flex {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16px;
-    }
-    .card-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: #0F172A;
-        margin: 0;
-    }
-    .card-link {
-        font-size: 12px;
-        font-weight: 600;
-        color: #0D9488;
-        cursor: pointer;
-        text-decoration: none;
-    }
-
-    /* Deals Pipeline Funnel Stages styling */
-    .funnel-container {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 10px;
-        margin-bottom: 16px;
-    }
-    @media (max-width: 900px) {
-        .funnel-container { grid-template-columns: 1fr; }
-    }
-    .funnel-stage-col {
-        border-radius: 10px;
-        overflow: hidden;
-        border: 1px solid #E2E8F0;
-        background: #F8FAFC;
-    }
-    .funnel-stage-header {
-        padding: 8px 10px;
-        color: #FFFFFF;
-        font-weight: 700;
-        font-size: 11px;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    .funnel-stage-body {
-        padding: 10px 8px;
-    }
-    .funnel-stage-amt {
-        font-size: 14px;
-        font-weight: 800;
-        color: #0F172A;
-        margin-bottom: 8px;
-        white-space: nowrap;
-    }
-    .funnel-deal-item {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 6px;
-        padding: 6px 8px;
-        margin-bottom: 6px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 11px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-    }
-    .funnel-deal-name {
-        font-weight: 600;
-        color: #1E293B;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 85px;
-    }
-    .funnel-deal-val {
-        font-weight: 700;
-        color: #0D9488;
-        font-size: 11px;
-    }
-
-    /* Leaderboard Rep item */
-    .rep-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 0;
-        border-bottom: 1px solid #F1F5F9;
-    }
-    .rep-profile {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .rep-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: #0D9488;
-        color: #FFFFFF;
-        font-weight: 700;
-        font-size: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .rep-name {
-        font-weight: 600;
-        font-size: 13px;
-        color: #1E293B;
-    }
-    .rep-progress-bar {
-        background: #E2E8F0;
-        border-radius: 999px;
-        height: 6px;
-        width: 90px;
-        overflow: hidden;
-        margin: 0 12px;
-    }
-    .rep-progress-fill {
-        background: #0D9488;
-        height: 100%;
-        border-radius: 999px;
-    }
-    .rep-stats {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .rep-val {
-        font-weight: 700;
-        font-size: 13px;
-        color: #0F172A;
-    }
-    .rep-pct {
-        font-size: 12px;
-        font-weight: 600;
-        color: #64748B;
-        min-width: 38px;
-        text-align: right;
-    }
-
-    /* Streamlit overrides for tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 6px;
-        background-color: transparent;
-        padding: 0;
-        margin-bottom: 16px;
-        border-bottom: 1px solid #E2E8F0;
-    }
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 6px 6px 0 0;
-        padding: 8px 16px;
-        color: #64748B;
-        font-weight: 600;
-        font-size: 14px;
-        border: none;
-        background: transparent;
-    }
-    .stTabs [aria-selected="true"] {
-        color: #0D9488 !important;
-        border-bottom: 2px solid #0D9488 !important;
-        background: transparent !important;
-    }
-</style>
-""", unsafe_allow_html=True)
+inject_custom_styles()
 
 # Load data
 @st.cache_data
@@ -425,20 +43,19 @@ def load_sales_data():
 
 df_master = load_sales_data()
 
-# ----------------- SIDEBAR: Dark Navy with Teal Accents -----------------
+# ----------------- SIDEBAR: Charcoal Blue & Pearl (Zero Emojis) -----------------
 with st.sidebar:
     st.markdown("""
     <div class="brand-container">
-        <div class="brand-icon">⚡</div>
+        <div class="brand-icon">SP</div>
         <div class="brand-text">SalesPulse</div>
     </div>
     <div class="nav-pill-active">
-        <span>📊</span>
-        <span>Dashboard</span>
+        <span>Dashboard Overview</span>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("### 🎛️ **Filters & Scope**")
+    st.markdown("### **Filters & Scope**")
 
     # Date Filter
     min_d = df_master["Order_Date"].min().date()
@@ -456,60 +73,63 @@ with st.sidebar:
     else:
         start_d, end_d = min_d, max_d
 
-    # Region Filter
-    regions_list = sorted(df_master["Region"].unique())
-    selected_regions = st.multiselect("Regions", options=regions_list, default=regions_list)
+    # Region Filter (Clean Text Dropdown - No Buttons)
+    regions_list = ["All Regions"] + sorted(df_master["Region"].unique().tolist())
+    selected_region = st.selectbox("Region", options=regions_list, index=0)
 
-    # Category Filter
-    cat_list = sorted(df_master["Category"].unique())
-    selected_cats = st.multiselect("Categories", options=cat_list, default=cat_list)
+    # Category Filter (Clean Text Dropdown - No Buttons)
+    cat_list = ["All Categories"] + sorted(df_master["Category"].unique().tolist())
+    selected_cat = st.selectbox("Category", options=cat_list, index=0)
 
-    # Customer Segment Filter
-    seg_list = sorted(df_master["Segment"].unique())
-    selected_segs = st.multiselect("Customer Segments", options=seg_list, default=seg_list)
+    # Customer Segment Filter (Clean Text Dropdown - No Buttons)
+    seg_list = ["All Segments"] + sorted(df_master["Segment"].unique().tolist())
+    selected_seg = st.selectbox("Customer Segment", options=seg_list, index=0)
 
     # Reset
-    if st.button("↺ Reset Filters", use_container_width=True):
+    if st.button("Reset Filters", use_container_width=True):
         st.rerun()
 
-    # Upgrade / Insights Card (Styled like bottom left widget in image)
+    # Upgrade / Insights Card
     st.markdown("""
     <div class="sidebar-upgrade-card">
         <h4>Upgrade to Pro</h4>
-        <p>Unlock predictive AI forecasting, deep automation, and custom exports.</p>
-        <div class="sidebar-upgrade-btn">Upgrade Now →</div>
+        <p>Unlock predictive AI forecasting, automated pipeline alerts, and custom executive reporting.</p>
+        <div class="sidebar-upgrade-btn">Upgrade Now</div>
     </div>
     """, unsafe_allow_html=True)
 
 # Filter Data
+region_mask = (df_master["Region"] == selected_region) if selected_region != "All Regions" else pd.Series(True, index=df_master.index)
+cat_mask = (df_master["Category"] == selected_cat) if selected_cat != "All Categories" else pd.Series(True, index=df_master.index)
+seg_mask = (df_master["Segment"] == selected_seg) if selected_seg != "All Segments" else pd.Series(True, index=df_master.index)
+
 filtered_df = df_master[
     (df_master["Order_Date"].dt.date >= start_d) &
     (df_master["Order_Date"].dt.date <= end_d) &
-    (df_master["Region"].isin(selected_regions)) &
-    (df_master["Category"].isin(selected_cats)) &
-    (df_master["Segment"].isin(selected_segs))
+    region_mask &
+    cat_mask &
+    seg_mask
 ]
 
 if filtered_df.empty:
     st.warning("No sales transactions found for the selected filter combination.")
     st.stop()
 
-# ----------------- TOP GREETING BAR -----------------
+# ----------------- TOP GREETING BAR: Pearl Architectural Finish -----------------
 st.markdown(f"""
 <div class="top-header-row">
     <div>
-        <h1 class="greeting-title">Welcome back, Alex! 👋</h1>
-        <p class="greeting-sub">Here's what's happening with your sales performance and pipeline today.</p>
+        <h1 class="greeting-title">Sales Analytics & Intelligence Dashboard</h1>
+        <p class="greeting-sub">Real-time enterprise visibility across transactions, gross margins, and pipeline velocity.</p>
     </div>
     <div class="date-pill">
-        <span>📅</span>
-        <span>{start_d.strftime('%b %d, %Y')} – {end_d.strftime('%b %d, %Y')}</span>
-        <span style="color:#0D9488; margin-left: 6px;">⚡ Filtered</span>
+        <span>Period: {start_d.strftime('%b %d, %Y')} - {end_d.strftime('%b %d, %Y')}</span>
+        <span style="color:#EAE0C8; margin-left: 8px; font-weight:700;">| Active</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# ----------------- 4 TOP KPI CARDS (Matching Image Exactly) -----------------
+# ----------------- 4 TOP KPI CARDS -----------------
 rev_total = filtered_df["Sales"].sum()
 profit_total = filtered_df["Profit"].sum()
 orders_total = len(filtered_df)
@@ -523,9 +143,9 @@ with k1:
 <div class="kpi-content">
 <span class="kpi-label">Total Volume</span>
 <span class="kpi-value">{filtered_df['Quantity'].sum():,}</span>
-<span class="kpi-delta">↑ 18.6% vs last period</span>
+<span class="kpi-delta">+18.6% vs last period</span>
 </div>
-<div class="kpi-icon-circle icon-teal">👥</div>
+<div class="kpi-icon-circle">VOL</div>
 </div>""", unsafe_allow_html=True)
 
 with k2:
@@ -533,9 +153,9 @@ with k2:
 <div class="kpi-content">
 <span class="kpi-label">Orders Placed</span>
 <span class="kpi-value">{orders_total:,}</span>
-<span class="kpi-delta">↑ 12.4% vs last period</span>
+<span class="kpi-delta">+12.4% vs last period</span>
 </div>
-<div class="kpi-icon-circle icon-navy">💼</div>
+<div class="kpi-icon-circle">ORD</div>
 </div>""", unsafe_allow_html=True)
 
 with k3:
@@ -543,9 +163,9 @@ with k3:
 <div class="kpi-content">
 <span class="kpi-label">Revenue (MTD)</span>
 <span class="kpi-value">${rev_total:,.0f}</span>
-<span class="kpi-delta">↑ 22.7% vs last month</span>
+<span class="kpi-delta">+22.7% vs last month</span>
 </div>
-<div class="kpi-icon-circle icon-coral">💵</div>
+<div class="kpi-icon-circle">REV</div>
 </div>""", unsafe_allow_html=True)
 
 with k4:
@@ -553,9 +173,9 @@ with k4:
 <div class="kpi-content">
 <span class="kpi-label">Sales Target</span>
 <span class="kpi-value">{target_pct:.0f}%</span>
-<span class="kpi-delta" style="color: #64748B;">${rev_total/1000:,.0f}K / ${sales_target/1000:,.0f}K</span>
+<span class="kpi-delta" style="color: #9BA8B8;">${rev_total/1000:,.0f}K / ${sales_target/1000:,.0f}K</span>
 </div>
-<div class="kpi-icon-circle icon-cyan">🎯</div>
+<div class="kpi-icon-circle">TGT</div>
 </div>""", unsafe_allow_html=True)
 
 st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
@@ -571,9 +191,9 @@ with col_sec1_left:
 </div>
 <div class="funnel-container">
 <div class="funnel-stage-col">
-<div class="funnel-stage-header" style="background:#0D9488;">
+<div class="funnel-stage-header">
 <span>Prospecting</span>
-<span style="font-size:11px; opacity:0.9;">18 Deals</span>
+<span style="font-size:11px; opacity:0.85;">18 Deals</span>
 </div>
 <div class="funnel-stage-body">
 <div class="funnel-stage-amt">$215,000</div>
@@ -592,9 +212,9 @@ with col_sec1_left:
 </div>
 </div>
 <div class="funnel-stage-col">
-<div class="funnel-stage-header" style="background:#3B82F6;">
+<div class="funnel-stage-header">
 <span>Qualification</span>
-<span style="font-size:11px; opacity:0.9;">22 Deals</span>
+<span style="font-size:11px; opacity:0.85;">22 Deals</span>
 </div>
 <div class="funnel-stage-body">
 <div class="funnel-stage-amt">$310,000</div>
@@ -613,9 +233,9 @@ with col_sec1_left:
 </div>
 </div>
 <div class="funnel-stage-col">
-<div class="funnel-stage-header" style="background:#1E3A8A;">
+<div class="funnel-stage-header">
 <span>Proposal</span>
-<span style="font-size:11px; opacity:0.9;">16 Deals</span>
+<span style="font-size:11px; opacity:0.85;">16 Deals</span>
 </div>
 <div class="funnel-stage-body">
 <div class="funnel-stage-amt">$240,000</div>
@@ -634,9 +254,9 @@ with col_sec1_left:
 </div>
 </div>
 <div class="funnel-stage-col">
-<div class="funnel-stage-header" style="background:#F43F5E;">
+<div class="funnel-stage-header">
 <span>Negotiation</span>
-<span style="font-size:11px; opacity:0.9;">10 Deals</span>
+<span style="font-size:11px; opacity:0.85;">10 Deals</span>
 </div>
 <div class="funnel-stage-body">
 <div class="funnel-stage-amt">$185,000</div>
@@ -655,9 +275,9 @@ with col_sec1_left:
 </div>
 </div>
 <div class="funnel-stage-col">
-<div class="funnel-stage-header" style="background:#10B981;">
+<div class="funnel-stage-header">
 <span>Closed Won</span>
-<span style="font-size:11px; opacity:0.9;">20 Deals</span>
+<span style="font-size:11px; opacity:0.85;">20 Deals</span>
 </div>
 <div class="funnel-stage-body">
 <div class="funnel-stage-amt">$512,000</div>
@@ -679,7 +299,6 @@ with col_sec1_left:
 </div>""", unsafe_allow_html=True)
 
 with col_sec1_right:
-    # Monthly sales vs target progress chart (Matching right top chart in image)
     df_monthly = filtered_df.groupby("YearMonth")["Sales"].sum().reset_index().tail(10)
     monthly_target = df_monthly["Sales"].mean() * 1.15
 
@@ -688,7 +307,7 @@ with col_sec1_right:
         x=df_monthly["YearMonth"],
         y=df_monthly["Sales"],
         name="Actual Sales",
-        marker_color="#0D9488",
+        marker_color="#EAE0C8",
         marker_line_width=0,
         opacity=0.9
     ))
@@ -697,28 +316,29 @@ with col_sec1_right:
         y=[monthly_target] * len(df_monthly),
         name="Target Baseline",
         mode="lines",
-        line=dict(color="#0284C7", dash="dash", width=2)
+        line=dict(color="#5A738E", dash="dash", width=2)
     ))
     fig_target.update_layout(
-        template="plotly_white",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
         height=260,
         margin=dict(l=10, r=10, t=10, b=10),
-        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#64748B"),
-        xaxis=dict(showgrid=False, linecolor="#E2E8F0"),
-        yaxis=dict(gridcolor="#F1F5F9", showline=False),
-        legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1)
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#9BA8B8"),
+        xaxis=dict(showgrid=False, linecolor="#364353", tickfont=dict(color="#9BA8B8")),
+        yaxis=dict(gridcolor="#283545", showline=False, tickfont=dict(color="#9BA8B8")),
+        legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1, font=dict(color="#EAE0C8"))
     )
 
     st.markdown(f"""
     <div class="analytics-card">
         <div class="card-header-flex">
             <h3 class="card-title">Sales Target Progress</h3>
-            <span style="font-size:12px; font-weight:700; color:#0D9488;">{target_pct:.0f}% Achieved</span>
+            <span style="font-size:12px; font-weight:700; color:#EAE0C8;">{target_pct:.0f}% Achieved</span>
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:13px;">
-            <div><span style="color:#64748B;">Target:</span> <b>${sales_target:,.0f}</b></div>
-            <div><span style="color:#64748B;">Achieved:</span> <b style="color:#0D9488;">${rev_total:,.0f}</b></div>
-            <div><span style="color:#64748B;">Remaining:</span> <b style="color:#F43F5E;">${max(0.0, sales_target - rev_total):,.0f}</b></div>
+            <div><span style="color:#9BA8B8;">Target:</span> <b style="color:#EAE0C8;">${sales_target:,.0f}</b></div>
+            <div><span style="color:#9BA8B8;">Achieved:</span> <b style="color:#EAE0C8;">${rev_total:,.0f}</b></div>
+            <div><span style="color:#9BA8B8;">Remaining:</span> <b style="color:#BAC7D5;">${max(0.0, sales_target - rev_total):,.0f}</b></div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -727,7 +347,7 @@ with col_sec1_right:
 # ----------------- SECTION 2: 3 COLUMNS (Category Donut, Team Leaderboard, Revenue Forecast) -----------------
 c_left, c_mid, c_right = st.columns([1, 1, 1.1])
 
-# Column 1: Category / Lead Share Donut
+# Column 1: Category Revenue Donut
 with c_left:
     st.markdown("""<div class="analytics-card" style="padding-bottom:12px;">
 <div class="card-header-flex">
@@ -742,127 +362,120 @@ with c_left:
         names="Category",
         values="Sales",
         hole=0.68,
-        color_discrete_sequence=["#0D9488", "#3B82F6", "#F43F5E"]
+        color_discrete_sequence=["#EAE0C8", "#5A738E", "#8CA3BA"]
     )
     fig_donut.update_layout(
-        template="plotly_white",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
         height=260,
         margin=dict(l=10, r=10, t=10, b=10),
-        font=dict(family="Plus Jakarta Sans, sans-serif", size=12, color="#64748B"),
-        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5),
-        annotations=[dict(text=f"<b>${rev_total/1000:,.0f}K</b><br><span style='font-size:10px; color:#64748B'>Total</span>", 
-                          x=0.5, y=0.5, font_size=16, showarrow=False)]
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#EAE0C8"),
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5, font=dict(color="#9BA8B8"))
     )
     st.plotly_chart(fig_donut, use_container_width=True)
 
-# Column 2: Team / Rep Performance Leaderboard
+# Column 2: Rep Performance Leaderboard
 with c_mid:
     st.markdown("""<div class="analytics-card">
 <div class="card-header-flex">
-<h3 class="card-title">Team Performance</h3>
-<span class="card-link">View All</span>
+<h3 class="card-title">Top Sales Executives</h3>
+<span class="card-link">Leaderboard</span>
 </div>
 <div class="rep-row">
 <div class="rep-profile">
-<div class="rep-avatar" style="background:#0D9488;">AM</div>
-<div class="rep-name">Alex Morgan</div>
+<div class="rep-avatar">EM</div>
+<span class="rep-name">Elena Morris</span>
 </div>
 <div class="rep-stats">
-<div class="rep-progress-bar"><div class="rep-progress-fill" style="width: 100%;"></div></div>
-<div class="rep-val">$152,500</div>
-<div class="rep-pct">102%</div>
-</div>
-</div>
-<div class="rep-row">
-<div class="rep-profile">
-<div class="rep-avatar" style="background:#3B82F6;">JC</div>
-<div class="rep-name">Jamie Carter</div>
-</div>
-<div class="rep-stats">
-<div class="rep-progress-bar"><div class="rep-progress-fill" style="width: 89%;"></div></div>
-<div class="rep-val">$118,900</div>
-<div class="rep-pct">89%</div>
+<div class="rep-progress-bar"><div class="rep-progress-fill" style="width:94%;"></div></div>
+<span class="rep-val">$184k</span>
+<span class="rep-pct">94%</span>
 </div>
 </div>
 <div class="rep-row">
 <div class="rep-profile">
-<div class="rep-avatar" style="background:#8B5CF6;">TB</div>
-<div class="rep-name">Taylor Brooks</div>
+<div class="rep-avatar">DK</div>
+<span class="rep-name">David Kim</span>
 </div>
 <div class="rep-stats">
-<div class="rep-progress-bar"><div class="rep-progress-fill" style="width: 76%;"></div></div>
-<div class="rep-val">$96,400</div>
-<div class="rep-pct">76%</div>
+<div class="rep-progress-bar"><div class="rep-progress-fill" style="width:88%;"></div></div>
+<span class="rep-val">$162k</span>
+<span class="rep-pct">88%</span>
 </div>
 </div>
 <div class="rep-row">
 <div class="rep-profile">
-<div class="rep-avatar" style="background:#F59E0B;">JL</div>
-<div class="rep-name">Jordan Lee</div>
+<div class="rep-avatar">SL</div>
+<span class="rep-name">Sarah Lin</span>
 </div>
 <div class="rep-stats">
-<div class="rep-progress-bar"><div class="rep-progress-fill" style="width: 65%;"></div></div>
-<div class="rep-val">$84,700</div>
-<div class="rep-pct">65%</div>
+<div class="rep-progress-bar"><div class="rep-progress-fill" style="width:82%;"></div></div>
+<span class="rep-val">$145k</span>
+<span class="rep-pct">82%</span>
 </div>
 </div>
-<div class="rep-row" style="border-bottom:none;">
+<div class="rep-row" style="border:none;">
 <div class="rep-profile">
-<div class="rep-avatar" style="background:#F43F5E;">MR</div>
-<div class="rep-name">Morgan Riley</div>
+<div class="rep-avatar">JW</div>
+<span class="rep-name">James Wilson</span>
 </div>
 <div class="rep-stats">
-<div class="rep-progress-bar"><div class="rep-progress-fill" style="width: 54%;"></div></div>
-<div class="rep-val">$72,300</div>
-<div class="rep-pct">54%</div>
+<div class="rep-progress-bar"><div class="rep-progress-fill" style="width:75%;"></div></div>
+<span class="rep-val">$128k</span>
+<span class="rep-pct">75%</span>
 </div>
 </div>
 </div>""", unsafe_allow_html=True)
 
-# Column 3: Revenue Forecast
+# Column 3: Forward Machine Learning Forecast
 with c_right:
-    # Build a clean predictive trend line
-    df_ts = df_master.groupby("YearMonth")["Sales"].sum().reset_index()
-    X = np.arange(len(df_ts)).reshape(-1, 1)
-    y = df_ts["Sales"].values
-    reg = LinearRegression().fit(X, y)
-    
-    # 4 future months
-    future_X = np.arange(len(df_ts), len(df_ts) + 4).reshape(-1, 1)
-    future_y = reg.predict(future_X)
-    last_m = pd.Period(df_ts["YearMonth"].iloc[-1], freq="M")
-    f_labels = [(last_m + i).strftime("%b") for i in range(1, 5)]
+    df_fc = filtered_df.groupby("YearMonth")["Sales"].sum().reset_index()
+    df_fc["Index"] = np.arange(len(df_fc))
+
+    if len(df_fc) >= 3:
+        X = df_fc[["Index"]].values
+        y = df_fc["Sales"].values
+        model = LinearRegression()
+        model.fit(X, y)
+
+        future_idx = np.arange(len(df_fc), len(df_fc) + 3).reshape(-1, 1)
+        future_y = model.predict(future_idx)
+        last_date = pd.to_datetime(df_fc["YearMonth"].iloc[-1] + "-01")
+        future_dates = [(last_date + pd.DateOffset(months=i)).strftime("%Y-%m") for i in range(1, 4)]
+    else:
+        future_dates = ["Mo +1", "Mo +2", "Mo +3"]
+        future_y = [rev_total * 0.35, rev_total * 0.38, rev_total * 0.40]
 
     fig_fc = go.Figure()
-    # Historical recent points
-    recent_labels = [pd.Period(m, freq="M").strftime("%b") for m in df_ts["YearMonth"].tail(6)]
     fig_fc.add_trace(go.Scatter(
-        x=recent_labels,
-        y=df_ts["Sales"].tail(6),
-        name="Actual",
+        x=df_fc["YearMonth"].tail(6),
+        y=df_fc["Sales"].tail(6),
+        name="Historical",
         mode="lines+markers",
-        line=dict(color="#94A3B8", width=2)
+        line=dict(color="#5A738E", width=2),
+        marker=dict(size=6, color="#5A738E")
     ))
-    # Forecast line
     fig_fc.add_trace(go.Scatter(
-        x=[recent_labels[-1]] + f_labels,
-        y=[df_ts["Sales"].iloc[-1]] + list(future_y),
+        x=future_dates,
+        y=future_y,
         name="Forecast",
         mode="lines+markers",
-        line=dict(color="#0D9488", width=3, dash="dot"),
-        marker=dict(size=7, color="#0D9488")
+        line=dict(color="#EAE0C8", width=3, dash="dot"),
+        marker=dict(size=7, color="#EAE0C8")
     ))
     fig_fc.update_layout(
-        template="plotly_white",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
         height=200,
         margin=dict(l=10, r=10, t=10, b=10),
-        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#64748B"),
-        xaxis=dict(showgrid=False, linecolor="#E2E8F0"),
-        yaxis=dict(gridcolor="#F1F5F9", showline=False),
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#9BA8B8"),
+        xaxis=dict(showgrid=False, linecolor="#364353", tickfont=dict(color="#9BA8B8")),
+        yaxis=dict(gridcolor="#283545", showline=False, tickfont=dict(color="#9BA8B8")),
         showlegend=False
     )
 
-    pred_rev = future_y.sum()
+    pred_rev = float(np.sum(future_y))
     st.markdown(f"""<div class="analytics-card">
 <div class="card-header-flex">
 <h3 class="card-title">Revenue Forecast</h3>
@@ -870,46 +483,48 @@ with c_right:
 </div>
 <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">
 <div>
-<span style="font-size:12px; color:#64748B; font-weight:600;">Predicted Forward Run-Rate</span>
-<div style="font-size:24px; font-weight:800; color:#0F172A;">${pred_rev:,.0f}</div>
-<span style="font-size:12px; font-weight:600; color:#10B981;">↑ +16.3% vs last quarter</span>
+<span style="font-size:12px; color:#9BA8B8; font-weight:600;">Predicted Forward Run-Rate</span>
+<div style="font-size:24px; font-weight:800; color:#EAE0C8;">${pred_rev:,.0f}</div>
+<span style="font-size:12px; font-weight:600; color:#EAE0C8;">+16.3% vs last quarter</span>
 </div>
-<div style="background:#E6FFFA; color:#0D9488; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700;">
+<div style="background:#18202A; color:#EAE0C8; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700; border: 1px solid #364353;">
 ${future_y[0]/1000:,.0f}K Next Mo
 </div>
 </div>""", unsafe_allow_html=True)
     st.plotly_chart(fig_fc, use_container_width=True)
 
-# ----------------- SECTION 3: DEEP-DIVE TABS (Regional, Products, Raw Data) -----------------
+# ----------------- SECTION 3: DEEP-DIVE TABS (Regional, Products, Raw Data - Zero Emojis) -----------------
 st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
 tab_reg, tab_prod, tab_table = st.tabs([
-    "🌍 Regional Sales & City Breakdown",
-    "📦 Product Portfolio & High Margin Stars",
-    "📋 Searchable Order Book & CSV Export"
+    "Regional Breakdown & Performance",
+    "Product Portfolio & Margins",
+    "Searchable Order Book & Export"
 ])
 
 with tab_reg:
     col_re1, col_re2 = st.columns([1.2, 0.8])
     with col_re1:
-        st.markdown("##### 📍 Regional Revenue & Profit Contribution")
+        st.markdown("##### Regional Revenue & Profit Contribution")
         df_reg = filtered_df.groupby("Region").agg({"Sales": "sum", "Profit": "sum"}).reset_index()
         fig_r = go.Figure(data=[
-            go.Bar(name="Revenue ($)", x=df_reg["Region"], y=df_reg["Sales"], marker_color="#0D9488"),
-            go.Bar(name="Profit ($)", x=df_reg["Region"], y=df_reg["Profit"], marker_color="#3B82F6")
+            go.Bar(name="Revenue ($)", x=df_reg["Region"], y=df_reg["Sales"], marker_color="#EAE0C8"),
+            go.Bar(name="Profit ($)", x=df_reg["Region"], y=df_reg["Profit"], marker_color="#5A738E")
         ])
         fig_r.update_layout(
-            template="plotly_white",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
             barmode="group",
             height=320,
-            font=dict(family="Plus Jakarta Sans", size=12, color="#64748B"),
-            xaxis=dict(showgrid=False),
-            yaxis=dict(gridcolor="#F1F5F9")
+            font=dict(family="Plus Jakarta Sans", size=12, color="#9BA8B8"),
+            xaxis=dict(showgrid=False, tickfont=dict(color="#9BA8B8")),
+            yaxis=dict(gridcolor="#283545", tickfont=dict(color="#9BA8B8")),
+            legend=dict(font=dict(color="#EAE0C8"))
         )
         st.plotly_chart(fig_r, use_container_width=True)
 
     with col_re2:
-        st.markdown("##### 🏙️ Top 5 Performing Hubs")
+        st.markdown("##### Top 5 Performing Hubs")
         df_cities = filtered_df.groupby("City")["Sales"].sum().reset_index().sort_values(by="Sales", ascending=True).tail(5)
         fig_c = px.bar(
             df_cities,
@@ -917,40 +532,43 @@ with tab_reg:
             y="City",
             orientation="h",
             color="Sales",
-            color_continuous_scale=["#99F6E4", "#0D9488"]
+            color_continuous_scale=["#5A738E", "#EAE0C8"]
         )
         fig_c.update_layout(
-            template="plotly_white",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
             height=320,
-            font=dict(family="Plus Jakarta Sans", size=12, color="#64748B"),
+            font=dict(family="Plus Jakarta Sans", size=12, color="#9BA8B8"),
             coloraxis_showscale=False,
-            xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=False)
+            xaxis=dict(showgrid=False, tickfont=dict(color="#9BA8B8")),
+            yaxis=dict(showgrid=False, tickfont=dict(color="#EAE0C8"))
         )
         st.plotly_chart(fig_c, use_container_width=True)
 
 with tab_prod:
     col_pr1, col_pr2 = st.columns(2)
     with col_pr1:
-        st.markdown("##### 🏆 Top 8 Best-Selling Products by Revenue")
+        st.markdown("##### Top 8 Best-Selling Products by Revenue")
         df_top_p = filtered_df.groupby("Product_Name")["Sales"].sum().reset_index().sort_values(by="Sales", ascending=False).head(8)
         fig_tp = px.bar(
             df_top_p,
             x="Product_Name",
             y="Sales",
-            color_discrete_sequence=["#0D9488"]
+            color_discrete_sequence=["#EAE0C8"]
         )
         fig_tp.update_layout(
-            template="plotly_white",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
             height=340,
             xaxis_tickangle=-35,
-            font=dict(family="Plus Jakarta Sans", size=11, color="#64748B"),
-            yaxis=dict(gridcolor="#F1F5F9")
+            font=dict(family="Plus Jakarta Sans", size=11, color="#9BA8B8"),
+            xaxis=dict(tickfont=dict(color="#9BA8B8")),
+            yaxis=dict(gridcolor="#283545", tickfont=dict(color="#9BA8B8"))
         )
         st.plotly_chart(fig_tp, use_container_width=True)
 
     with col_pr2:
-        st.markdown("##### ⚖️ Sub-Category Margin Health")
+        st.markdown("##### Sub-Category Margin Health")
         df_sub = filtered_df.groupby("Sub_Category").agg({"Sales": "sum", "Profit": "sum"}).reset_index()
         df_sub["Margin"] = (df_sub["Profit"] / df_sub["Sales"]) * 100
         df_sub = df_sub.sort_values(by="Margin", ascending=True)
@@ -960,19 +578,22 @@ with tab_prod:
             y="Sub_Category",
             orientation="h",
             color="Margin",
-            color_continuous_scale=["#FDA4AF", "#10B981"]
+            color_continuous_scale=["#364353", "#EAE0C8"]
         )
         fig_sub.update_layout(
-            template="plotly_white",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
             height=340,
-            font=dict(family="Plus Jakarta Sans", size=11, color="#64748B"),
+            font=dict(family="Plus Jakarta Sans", size=11, color="#9BA8B8"),
             coloraxis_showscale=False,
-            xaxis_title="Margin (%)"
+            xaxis_title="Margin (%)",
+            xaxis=dict(tickfont=dict(color="#9BA8B8")),
+            yaxis=dict(tickfont=dict(color="#EAE0C8"))
         )
         st.plotly_chart(fig_sub, use_container_width=True)
 
 with tab_table:
-    st.markdown("##### 🔍 Search & Filter Orders")
+    st.markdown("##### Search & Filter Orders")
     search = st.text_input("Quick search across Customer, Order ID, or Product", "")
     t_df = filtered_df.copy()
     if search:
@@ -994,7 +615,7 @@ with tab_table:
 
     csv_data = t_df.to_csv(index=False).encode('utf-8')
     st.download_button(
-        label="📥 Download Filtered Orders CSV",
+        label="Download Filtered Orders CSV",
         data=csv_data,
         file_name=f"sales_data_export_{datetime.now().strftime('%Y%m%d')}.csv",
         mime="text/csv"
